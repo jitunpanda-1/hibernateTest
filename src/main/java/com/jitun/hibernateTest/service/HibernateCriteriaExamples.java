@@ -9,6 +9,10 @@ import org.hibernate.FetchMode;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
+import org.hibernate.criterion.CriteriaSpecification;
+import org.hibernate.criterion.Criterion;
+import org.hibernate.criterion.Disjunction;
+import org.hibernate.criterion.MatchMode;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.ProjectionList;
 import org.hibernate.criterion.Projections;
@@ -91,6 +95,42 @@ public class HibernateCriteriaExamples {
 			System.out.println(Arrays.toString(arr));
 		}
 		
+		/**
+		 *  Using Disjunction Objects with Criteria
+		If we wanted to create an OR expression with more than two different criteria 
+		(for example, “price > 25.0 OR name like Mou% OR description not like blocks%”),
+		we would use an org.hibernate.criterion.Disjunction object to represent a disjunction.
+		 */
+		 	
+		criteria = session.createCriteria(Employee.class);
+		Criterion priceLessThan = Restrictions.lt("price", 10.0);
+		Criterion mouse = Restrictions.ilike("description", "mouse", MatchMode.ANYWHERE);
+		Criterion browser = Restrictions.ilike("description", "browser", MatchMode.ANYWHERE);
+		Disjunction disjunction = Restrictions.disjunction();
+		disjunction.add(priceLessThan);
+		disjunction.add(mouse);
+		disjunction.add(browser);
+		criteria.add(disjunction);
+		List results = criteria.list();
+		
+		/**
+		 * sorting 
+		 */
+		criteria = session.createCriteria(Employee.class);
+		criteria.add(Restrictions.gt("price",10.0));
+		criteria.addOrder(Order.desc("price"));
+		List<Employee> results1 = criteria.list();
+		
+		
+		/*select distinct owner from Owner owner 
+		join owner.cats cat 
+		where cat.eyeColor = 'blue'
+		Which is*/
+
+		criteria = session.createCriteria(Employee.class, "owner");
+		criteria.createAlias("owner.cats", "cat");
+		criteria.add(Restrictions.eq("cat.eyeColor", "blue"));
+		criteria.setResultTransformer(CriteriaSpecification.DISTINCT_ROOT_ENTITY);
 		
 		// Rollback transaction to avoid messing test data
 		tx.commit();
